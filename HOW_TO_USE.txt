@@ -1,0 +1,14 @@
+TEST MASTER — VERY SIMPLE USE
+
+1. Open index.html in Chrome to test the app immediately.
+2. Inside the app press “MCQs”.
+3. Press “Add One MCQ” to enter questions one by one.
+4. Or press “Download MCQ Template”, fill the CSV file, then “Import MCQs File”.
+5. Go to “Test” and choose Subject, Chapter, number of questions and time.
+6. Take the test. Results are saved on the device.
+
+ANDROID:
+The same app is included inside the app/ folder as an Android Studio project. It can be opened in Android Studio and built into APK/AAB.
+
+IMPORTANT:
+This package is the full functional v1 app prototype. A signed Play Store AAB still requires a local Android build/signing step and the developer’s Google Play Console account.

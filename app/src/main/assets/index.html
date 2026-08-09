@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#1769e0"><meta name="apple-mobile-web-app-capable" content="yes">
+<title>Test Master</title>
+<style>
+:root{--blue:#1769e0;--bg:#f3f6fb;--text:#152033;--muted:#667085;--card:#fff;--line:#dde3ec;--good:#16a34a;--bad:#dc2626}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
+header{background:var(--blue);color:#fff;padding:18px 16px;position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:24px}header small{opacity:.9}
+nav{display:flex;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:76px;z-index:4}
+nav button{flex:1;border:0;background:#fff;padding:12px 4px;font-size:13px;color:#536070}
+nav button.active{color:var(--blue);font-weight:700;border-bottom:3px solid var(--blue)}
+main{max-width:720px;margin:auto;padding:14px}
+.card{background:var(--card);border-radius:16px;padding:17px;margin:12px 0;box-shadow:0 2px 12px #0000000b}
+h2,h3{margin-top:0}.muted{color:var(--muted);font-size:14px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button,input,select,textarea{font:inherit}button{border:0;border-radius:10px;padding:12px;background:var(--blue);color:#fff;cursor:pointer;width:100%;margin:5px 0}
+button.secondary{background:#e9f0ff;color:#1552b3}button.danger{background:#fee2e2;color:#a11}
+input,select,textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px;background:#fff;margin:5px 0 10px}
+textarea{min-height:90px;resize:vertical}.hidden{display:none!important}
+.stat{padding:14px;border-radius:12px;background:#f7f9fc;text-align:center}.stat b{display:block;font-size:25px}
+.option{text-align:left;background:#f8fafc;color:var(--text);border:1px solid var(--line)}.option.good{background:#dcfce7;border-color:#86efac}.option.bad{background:#fee2e2;border-color:#fca5a5}
+.topline{display:flex;justify-content:space-between;gap:8px}.pill{background:#e9f0ff;color:#1552b3;border-radius:20px;padding:7px 10px;font-size:13px}
+.score{text-align:center;font-size:50px;font-weight:800;color:var(--blue)}.review{border-left:4px solid var(--bad);padding:10px;background:#fafafa;margin:9px 0}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:8px;border-bottom:1px solid var(--line);text-align:left}
+@media(max-width:520px){.grid{grid-template-columns:1fr}}
+</style></head>
+<body>
+<header><h1>Test Master</h1><small>MCQ Test Preparation</small></header>
+<nav id="nav">
+<button data-page="home" class="active">Home</button><button data-page="bank">MCQs</button><button data-page="test">Test</button><button data-page="history">Results</button>
+</nav>
+<main>
+<section id="home" class="page">
+<div class="card"><h2>Welcome</h2><p class="muted">Add your MCQs, choose a subject and chapter, then start a test.</p>
+<div class="grid"><div class="stat"><b id="qcount">0</b>MCQs</div><div class="stat"><b id="subjectcount">0</b>Subjects</div></div></div>
+<div class="card"><h3>Quick Start</h3><button onclick="go('bank')">➕ Add MCQs</button><button class="secondary" onclick="go('test')">▶ Start Test</button></div>
+</section>
+
+<section id="bank" class="page hidden">
+<div class="card"><h2>My MCQs</h2><p class="muted">You can add questions one by one, or import many at once.</p>
+<button onclick="toggle('addbox')">➕ Add One MCQ</button>
+<button class="secondary" onclick="document.getElementById('file').click()">📥 Import MCQs File</button>
+<input id="file" type="file" accept=".csv,.json" class="hidden" onchange="importFile(event)">
+<button class="secondary" onclick="downloadTemplate()">⬇ Download MCQ Template</button>
+<button class="danger" onclick="clearAll()">Delete All MCQs</button></div>
+
+<div id="addbox" class="card hidden"><h3>Add MCQ</h3>
+<input id="sub" placeholder="Subject (e.g. Biology)">
+<input id="chap" placeholder="Chapter (e.g. Cell)">
+<textarea id="qq" placeholder="Question"></textarea>
+<input id="o1" placeholder="Option A"><input id="o2" placeholder="Option B"><input id="o3" placeholder="Option C"><input id="o4" placeholder="Option D">
+<select id="ans"><option value="0">Correct answer: A</option><option value="1">Correct answer: B</option><option value="2">Correct answer: C</option><option value="3">Correct answer: D</option></select>
+<input id="exp" placeholder="Explanation (optional)">
+<button onclick="addOne()">Save MCQ</button></div>
+<div class="card"><div id="banklist"></div></div>
+</section>
+
+<section id="test" class="page hidden">
+<div id="setup" class="card"><h2>Start Test</h2>
+<label>Subject</label><select id="tsub"></select>
+<label>Chapter</label><select id="tchap"></select>
+<label>Number of MCQs</label><select id="tn"><option>5</option><option>10</option><option>20</option><option>50</option></select>
+<label>Time</label><select id="tmin"><option value="5">5 minutes</option><option value="10">10 minutes</option><option value="20">20 minutes</option><option value="60">60 minutes</option></select>
+<button onclick="startTest()">Start Test</button></div>
+<div id="quiz" class="card hidden"><div class="topline"><span class="pill" id="qmeta"></span><span class="pill" id="clock"></span></div><h2 id="question"></h2><div id="options"></div><button id="next" class="hidden" onclick="nextQ()">Next Question</button></div>
+<div id="result" class="card hidden"><h2>Result</h2><div id="resultScore" class="score"></div><p id="resultText"></p><button onclick="reviewResult()">Review Wrong Answers</button><button class="secondary" onclick="resetTest()">New Test</button><div id="wrongReview"></div></div>
+</section>
+
+<section id="history" class="page hidden"><div class="card"><h2>Test History</h2><div id="historyList"></div></div></section>
+</main>
+<script>
+const KEY='testmaster_questions_v1',HKEY='testmaster_history_v1';
+let bank=JSON.parse(localStorage.getItem(KEY)||'[]'),history=JSON.parse(localStorage.getItem(HKEY)||'[]');
+let quiz=[],qi=0,score=0,wrong=[],seconds=0,timer=null,answered=false;
+
+function save(){localStorage.setItem(KEY,JSON.stringify(bank));render()}
+function render(){document.getElementById('qcount').textContent=bank.length;document.getElementById('subjectcount').textContent=new Set(bank.map(x=>x.subject)).size;renderBank();fillSelectors();renderHistory()}
+function go(p){document.querySelectorAll('.page').forEach(x=>x.classList.add('hidden'));document.getElementById(p).classList.remove('hidden');document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===p));render()}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.page));
+function toggle(id){document.getElementById(id).classList.toggle('hidden')}
+function addOne(){
+let vals=['sub','chap','qq','o1','o2','o3','o4'].map(id=>document.getElementById(id).value.trim());
+if(vals.some(x=>!x)){alert('Please fill Subject, Chapter, Question and all 4 options.');return}
+bank.push({id:Date.now(),subject:vals[0],chapter:vals[1],q:vals[2],options:vals.slice(3),answer:+document.getElementById('ans').value,explanation:document.getElementById('exp').value.trim()});
+save();['qq','o1','o2','o3','o4','exp'].forEach(id=>document.getElementById(id).value='');alert('MCQ saved.');}
+function renderBank(){let d=document.getElementById('banklist');if(!bank.length){d.innerHTML='<p class="muted">No MCQs yet. Add your first question above.</p>';return}
+d.innerHTML='<p><b>'+bank.length+'</b> MCQs</p>'+bank.slice().reverse().map((x,n)=>'<div class="card"><b>'+x.subject+' → '+x.chapter+'</b><p>'+esc(x.q)+'</p><small>Correct: '+['A','B','C','D'][x.answer]+'</small><button class="danger" onclick="delQ('+x.id+')">Delete</button></div>').join('')}
+function delQ(id){bank=bank.filter(x=>x.id!==id);save()}
+function fillSelectors(){
+let subs=[...new Set(bank.map(x=>x.subject))];let ts=document.getElementById('tsub');let old=ts.value;
+ts.innerHTML='<option value="ALL">All Subjects</option>'+subs.map(x=>'<option>'+esc(x)+'</option>').join('');if(subs.includes(old))ts.value=old;fillChapters();
+}
+document.getElementById('tsub').onchange=fillChapters;
+function fillChapters(){let s=document.getElementById('tsub').value;let cs=[...new Set(bank.filter(x=>s==='ALL'||x.subject===s).map(x=>x.chapter))];document.getElementById('tchap').innerHTML='<option value="ALL">All Chapters</option>'+cs.map(x=>'<option>'+esc(x)+'</option>').join('')}
+function startTest(){
+if(!bank.length){alert('First add some MCQs.');go('bank');return}
+let s=document.getElementById('tsub').value,c=document.getElementById('tchap').value,n=+document.getElementById('tn').value;
+quiz=bank.filter(x=>(s==='ALL'||x.subject===s)&&(c==='ALL'||x.chapter===c)).sort(()=>Math.random()-.5).slice(0,n);
+if(!quiz.length){alert('No MCQs match this selection.');return}
+qi=0;score=0;wrong=[];seconds=+document.getElementById('tmin').value*60;answered=false;document.getElementById('setup').classList.add('hidden');document.getElementById('result').classList.add('hidden');document.getElementById('quiz').classList.remove('hidden');clearInterval(timer);timer=setInterval(()=>{seconds--;clock();if(seconds<=0)finish()},1000);showQ()}
+function clock(){let m=Math.floor(seconds/60),s=seconds%60;document.getElementById('clock').textContent=m+':'+String(s).padStart(2,'0')}
+function showQ(){answered=false;let x=quiz[qi];document.getElementById('qmeta').textContent=(qi+1)+' / '+quiz.length+' • '+x.subject;document.getElementById('question').textContent=x.q;let o=document.getElementById('options');o.innerHTML='';x.options.forEach((t,k)=>{let b=document.createElement('button');b.className='option';b.textContent=['A. ','B. ','C. ','D. '][k]+t;b.onclick=()=>answer(k,b);o.appendChild(b)});document.getElementById('next').classList.add('hidden');clock()}
+function answer(k,b){if(answered)return;answered=true;let x=quiz[qi];document.querySelectorAll('.option').forEach((e,j)=>{if(j===x.answer)e.classList.add('good')});if(k===x.answer)score++;else{b.classList.add('bad');wrong.push({x,chosen:k})}document.getElementById('next').classList.remove('hidden')}
+function nextQ(){if(qi+1<quiz.length){qi++;showQ()}else finish()}
+function finish(){clearInterval(timer);document.getElementById('quiz').classList.add('hidden');document.getElementById('result').classList.remove('hidden');let p=Math.round(score/quiz.length*100);document.getElementById('resultScore').textContent=p+'%';document.getElementById('resultText').textContent='Correct: '+score+' / '+quiz.length+' • Wrong: '+(quiz.length-score);history.unshift({date:new Date().toLocaleString(),score,p,total:quiz.length,subject:quiz[0]?.subject||'All'});history=history.slice(0,50);localStorage.setItem(HKEY,JSON.stringify(history));document.getElementById('wrongReview').innerHTML=''}
+function reviewResult(){let r=document.getElementById('wrongReview');r.innerHTML='<h3>Wrong Answers</h3>';if(!wrong.length){r.innerHTML+='<p>Excellent — all answers were correct.</p>';return}wrong.forEach(w=>{r.innerHTML+='<div class="review"><b>'+esc(w.x.q)+'</b><br>Your answer: '+esc(w.x.options[w.chosen])+'<br>Correct: '+esc(w.x.options[w.x.answer])+(w.x.explanation?'<br><span class="muted">'+esc(w.x.explanation)+'</span>':'')+'</div>'})}
+function resetTest(){document.getElementById('result').classList.add('hidden');document.getElementById('setup').classList.remove('hidden')}
+function renderHistory(){let d=document.getElementById('historyList');if(!history.length){d.innerHTML='<p class="muted">No tests taken yet.</p>';return}d.innerHTML='<table><tr><th>Date</th><th>Subject</th><th>Score</th></tr>'+history.map(x=>'<tr><td>'+esc(x.date)+'</td><td>'+esc(x.subject)+'</td><td>'+x.score+'/'+x.total+' ('+x.p+'%)</td></tr>').join('')+'</table>'}
+function clearAll(){if(confirm('Delete all MCQs?')){bank=[];save()}}
+function importFile(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let text=r.result.trim(),data=f.name.toLowerCase().endsWith('.json')?JSON.parse(text):csv(text);if(!Array.isArray(data)||!data.length)throw 0;bank=bank.concat(data.map((x,i)=>({id:Date.now()+i,subject:x.subject||'General',chapter:x.chapter||'General',q:x.q||x.question,options:x.options||[x.A,x.B,x.C,x.D],answer:Number(x.answer||0),explanation:x.explanation||''})));save();alert(data.length+' MCQs imported.')}catch(err){alert('Could not import this file. Use the template.')}};r.readAsText(f);e.target.value=''}
+function csv(t){let lines=t.split(/\r?\n/).filter(Boolean),head=lines.shift().split(',').map(x=>x.trim());return lines.map(line=>{let a=line.split(',');let o={};head.forEach((h,i)=>o[h]=a[i]?.trim()||'');o.options=[o.A,o.B,o.C,o.D];return o})}
+function downloadTemplate(){let t='subject,chapter,question,A,B,C,D,answer,explanation\\nBiology,Cell,Which organelle is the powerhouse of the cell?,Nucleus,Mitochondrion,Ribosome,Vacuole,1,Mitochondria produce most cellular ATP.';let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download='MCQ_Template.csv';a.click()}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+render();
+</script></body></html>

@@ -1,0 +1,23 @@
+TEST MASTER — CODING ROUTE FROM A MOBILE PHONE
+
+You do NOT need to understand the source code.
+
+This is still the coding/Android Studio project you asked for, but a GitHub Actions build file has been added so a cloud computer can compile the project while you operate GitHub from your phone.
+
+CURRENT GOAL:
+1. Put this project into a GitHub repository.
+2. Open Actions.
+3. Run "Build Test Master APK".
+4. Download the generated debug APK.
+5. Install it on your Android phone and test the app.
+6. After the app is finalized, create a signed release/AAB for Google Play.
+
+IMPORTANT:
+- The ZIP itself is NOT the APK.
+- Do not upload the ZIP directly to Google Play.
+- APK is for installing/testing on your phone.
+- AAB is the package used for Google Play publishing.
+- Keep the source project and signing/upload key safe for future updates.
+
+The app itself contains:
+Home, MCQ management, one-by-one MCQ entry, CSV import, subject/chapter selection, timed tests, random questions, results, wrong-answer review, and test history.
