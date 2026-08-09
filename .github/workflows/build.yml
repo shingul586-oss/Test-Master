@@ -19,18 +19,15 @@ jobs:
 
       - name: Generate Gradle Wrapper
         run: gradle wrapper --gradle-version 8.4
-        working-directory: ./app
 
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
-        working-directory: ./app
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug
-        working-directory: ./app
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: app/app/build/outputs/apk/debug/*.apk
+          path: app/build/outputs/apk/debug/*.apk
