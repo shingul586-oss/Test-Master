@@ -35,7 +35,7 @@ h1,h2,h3{font:var(--font-d);letter-spacing:-.02em;margin:0 0 8px}
 main{max-width:640px;margin:0 auto;padding:14px 14px 96px}
 
 /* ---------- Header ---------- */
-header{position:sticky;top:0;z-index:10;background:var(--indigo);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow)}
+header{position:sticky;top:0;z-index:10;background:var(--indigo);color:#fff;padding:calc(14px + env(safe-area-inset-top,0px)) 16px 14px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow)}
 .logo{width:34px;height:34px;border-radius:10px;background:var(--amber);display:flex;align-items:center;justify-content:center;font:800 18px var(--font-d);color:var(--indigo);flex-shrink:0}
 header .title{flex:1;min-width:0}
 header .title b{display:block;font:800 18px var(--font-d);letter-spacing:-.02em}
