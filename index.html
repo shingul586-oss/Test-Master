@@ -7,6 +7,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="description" content="Quiznix — build question banks, practice smarter, and track exactly where you're improving.">
 <title>Quiznix</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 /* ---------- Design tokens ---------- */
 :root{
@@ -17,8 +20,8 @@
   --line:#E4E1D9; --text:#1B1C2B; --muted:#6B6E85;
   --card:#FFFFFF; --bg:var(--paper);
   --radius:18px; --radius-sm:12px;
-  --font-d:800 1em/1.1 -apple-system,'Segoe UI',Roboto,ui-sans-serif,sans-serif;
-  --font-b:-apple-system,'Segoe UI',Roboto,ui-sans-serif,sans-serif;
+  --font-d:800 1em/1.1 'Poppins',-apple-system,'Segoe UI',Roboto,ui-sans-serif,sans-serif;
+  --font-b:'Inter',-apple-system,'Segoe UI',Roboto,ui-sans-serif,sans-serif;
   --font-m:ui-monospace,'SF Mono','Cascadia Code','Roboto Mono',monospace;
   --shadow:0 2px 14px rgba(20,21,28,.07);
 }
@@ -165,6 +168,7 @@ td,th{padding:8px 4px;border-bottom:1px solid var(--line);text-align:left}
       <button class="btn ghost sm" style="width:100%" onclick="downloadTemplate()">⬇ CSV template</button>
       <button class="btn ghost sm" style="width:100%" onclick="exportBackup()">⬇ Full backup (JSON)</button>
     </div>
+    <button class="btn danger sm" style="width:100%;margin-top:5px" onclick="clearAll()">🗑 Delete all MCQs</button>
   </div>
 
   <div id="addbox" class="card hidden">
@@ -237,7 +241,7 @@ td,th{padding:8px 4px;border-bottom:1px solid var(--line);text-align:left}
     <h2>Result</h2>
     <div id="resultScore" class="score"></div>
     <p id="resultText" class="muted" style="text-align:center"></p>
-    <button class="btn accent" onclick="reviewResult()">Review wrong answers</button>
+    <button class="btn accent" onclick="reviewResult()">Review all answers</button>
     <button class="btn secondary" onclick="resetTest()">New session</button>
     <div id="wrongReview"></div>
   </div>
@@ -398,17 +402,50 @@ function importFile(e){
   };
   r.readAsText(f); e.target.value='';
 }
+function parseCsvLine(line){
+  // Properly handles commas inside quoted fields (e.g. "text, with a comma")
+  const out=[]; let cur=''; let inQuotes=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(inQuotes){
+      if(ch==='"'){
+        if(line[i+1]==='"'){ cur+='"'; i++; } else { inQuotes=false; }
+      } else { cur+=ch; }
+    } else {
+      if(ch==='"'){ inQuotes=true; }
+      else if(ch===','){ out.push(cur); cur=''; }
+      else { cur+=ch; }
+    }
+  }
+  out.push(cur);
+  return out;
+}
 function csv(t){
-  const lines=t.split(/\r?\n/).filter(Boolean), head=lines.shift().split(',').map(x=>x.trim());
-  return lines.map(line=>{ const a=line.split(','); const o={}; head.forEach((h,i)=>o[h]=a[i]?.trim()||''); o.options=[o.A,o.B,o.C,o.D]; return o; });
+  const lines=t.split(/\r?\n/).filter(x=>x.trim().length);
+  const head=parseCsvLine(lines.shift()).map(x=>x.trim());
+  return lines.map(line=>{
+    const a=parseCsvLine(line); const o={};
+    head.forEach((h,i)=>o[h]=(a[i]??'').trim());
+    o.options=[o.A,o.B,o.C,o.D];
+    return o;
+  });
+}
+function utf8_to_b64(str){ return btoa(unescape(encodeURIComponent(str))); }
+function saveOrDownload(filename, content, mime){
+  // Inside the Android app, the WebView can't do normal browser downloads,
+  // so we hand the file to the native Android side to save into Downloads.
+  if(window.Android && window.Android.saveFile){
+    try{ window.Android.saveFile(filename, utf8_to_b64(content), mime); return; }catch(e){}
+  }
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([content],{type:mime})); a.download=filename; a.click();
 }
 function downloadTemplate(){
   const t='subject,chapter,question,A,B,C,D,answer,explanation\nBiology,Cell,Which organelle is the powerhouse of the cell?,Nucleus,Mitochondrion,Ribosome,Vacuole,1,Mitochondria produce most cellular ATP.';
-  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'})); a.download='Quiznix_Template.csv'; a.click();
+  saveOrDownload('Quiznix_Template.csv', t, 'text/csv');
 }
 function exportBackup(){
   const payload = {app:'Quiznix', exportedAt:new Date().toISOString(), bank, history, settings};
-  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'})); a.download='Quiznix_Backup.json'; a.click();
+  saveOrDownload('Quiznix_Backup.json', JSON.stringify(payload,null,2), 'application/json');
 }
 
 /* ======================= SELECTORS ======================= */
@@ -438,7 +475,7 @@ function presetMode(m){
 }
 
 /* ======================= QUIZ ENGINE (practice + test) ======================= */
-let quiz=[], qi=0, score=0, wrong=[], seconds=0, totalSeconds=0, timer=null, answered=false;
+let quiz=[], qi=0, score=0, wrong=[], allAnswers=[], seconds=0, totalSeconds=0, timer=null, answered=false;
 
 function startSession(){
   if(!bank.length){ alert('First add some MCQs.'); go('bank'); return; }
@@ -449,7 +486,7 @@ function startSession(){
   document.getElementById('setup').classList.add('hidden');
   document.getElementById('result').classList.add('hidden');
   if(sessionMode==='flash'){ startFlash(); return; }
-  qi=0; score=0; wrong=[]; answered=false;
+  qi=0; score=0; wrong=[]; allAnswers=[]; answered=false;
   totalSeconds = seconds = sessionMode==='test' ? (+document.getElementById('tmin').value*60) : 0;
   document.getElementById('quiz').classList.remove('hidden');
   clearInterval(timer);
@@ -486,8 +523,9 @@ function answer(k,b){
   if(answered) return; answered=true;
   const x=quiz[qi]; x.attempts=(x.attempts||0)+1;
   document.querySelectorAll('.option').forEach((e,j)=>{ if(j===x.answer) e.classList.add('good'); });
-  if(k===x.answer){ score++; }
-  else { b.classList.add('bad'); wrong.push({x,chosen:k}); x.wrongCount=(x.wrongCount||0)+1; }
+  const correct = k===x.answer;
+  if(correct){ score++; } else { b.classList.add('bad'); wrong.push({x,chosen:k}); x.wrongCount=(x.wrongCount||0)+1; }
+  allAnswers.push({x, chosen:k, correct});
   saveBank();
   document.getElementById('next').classList.remove('hidden');
 }
@@ -512,11 +550,15 @@ function finish(){
   renderAll();
 }
 function reviewResult(){
-  const r=document.getElementById('wrongReview'); r.innerHTML='<h3>Wrong answers</h3>';
-  if(!wrong.length){ r.innerHTML+='<p class="muted">Excellent — all answers were correct.</p>'; return; }
-  wrong.forEach(w=>{
-    r.innerHTML+='<div class="review"><b>'+esc(w.x.q)+'</b><br>Your answer: '+esc(w.x.options[w.chosen])+
-      '<br>Correct: '+esc(w.x.options[w.x.answer])+(w.x.explanation?'<br><span class="muted">'+esc(w.x.explanation)+'</span>':'')+'</div>';
+  const r=document.getElementById('wrongReview'); r.innerHTML='<h3>All answers</h3>';
+  if(!allAnswers.length){ r.innerHTML+='<p class="muted">No answers recorded for this session.</p>'; return; }
+  allAnswers.forEach((a,i)=>{
+    const icon = a.correct ? '✅' : '❌';
+    const yourLine = a.correct ? '' : ('Your answer: '+esc(a.x.options[a.chosen])+'<br>');
+    r.innerHTML+='<div class="review" style="border-left-color:'+(a.correct?'var(--green)':'var(--red)')+'">'+
+      '<b>'+icon+' Q'+(i+1)+'. '+esc(a.x.q)+'</b><br>'+yourLine+
+      'Correct answer: '+esc(a.x.options[a.x.answer])+
+      (a.x.explanation?'<br><span class="muted">'+esc(a.x.explanation)+'</span>':'')+'</div>';
   });
 }
 function resetTest(){
@@ -527,7 +569,7 @@ function resetTest(){
 function reviewWeak(){
   const weak = bank.filter(x=>(x.wrongCount||0)>0).sort((a,b)=>(b.wrongCount||0)-(a.wrongCount||0)).slice(0,20);
   if(!weak.length){ alert('No weak questions yet — nice! Take a test to build this list.'); return; }
-  quiz=weak; qi=0; score=0; wrong=[]; answered=false; sessionMode='practice'; totalSeconds=seconds=0;
+  quiz=weak; qi=0; score=0; wrong=[]; allAnswers=[]; answered=false; sessionMode='practice'; totalSeconds=seconds=0;
   go('test');
   document.getElementById('setup').classList.add('hidden');
   document.getElementById('quiz').classList.remove('hidden');
