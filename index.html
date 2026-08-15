@@ -1,117 +1,646 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#1769e0"><meta name="apple-mobile-web-app-capable" content="yes">
-<title>Test Master</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2B2D6E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="description" content="Quiznix — build question banks, practice smarter, and track exactly where you're improving.">
+<title>Quiznix</title>
 <style>
-:root{--blue:#1769e0;--bg:#f3f6fb;--text:#152033;--muted:#667085;--card:#fff;--line:#dde3ec;--good:#16a34a;--bad:#dc2626}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
-header{background:var(--blue);color:#fff;padding:18px 16px;position:sticky;top:0;z-index:5}
-header h1{margin:0;font-size:24px}header small{opacity:.9}
-nav{display:flex;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:76px;z-index:4}
-nav button{flex:1;border:0;background:#fff;padding:12px 4px;font-size:13px;color:#536070}
-nav button.active{color:var(--blue);font-weight:700;border-bottom:3px solid var(--blue)}
-main{max-width:720px;margin:auto;padding:14px}
-.card{background:var(--card);border-radius:16px;padding:17px;margin:12px 0;box-shadow:0 2px 12px #0000000b}
-h2,h3{margin-top:0}.muted{color:var(--muted);font-size:14px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-button,input,select,textarea{font:inherit}button{border:0;border-radius:10px;padding:12px;background:var(--blue);color:#fff;cursor:pointer;width:100%;margin:5px 0}
-button.secondary{background:#e9f0ff;color:#1552b3}button.danger{background:#fee2e2;color:#a11}
-input,select,textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px;background:#fff;margin:5px 0 10px}
-textarea{min-height:90px;resize:vertical}.hidden{display:none!important}
-.stat{padding:14px;border-radius:12px;background:#f7f9fc;text-align:center}.stat b{display:block;font-size:25px}
-.option{text-align:left;background:#f8fafc;color:var(--text);border:1px solid var(--line)}.option.good{background:#dcfce7;border-color:#86efac}.option.bad{background:#fee2e2;border-color:#fca5a5}
-.topline{display:flex;justify-content:space-between;gap:8px}.pill{background:#e9f0ff;color:#1552b3;border-radius:20px;padding:7px 10px;font-size:13px}
-.score{text-align:center;font-size:50px;font-weight:800;color:var(--blue)}.review{border-left:4px solid var(--bad);padding:10px;background:#fafafa;margin:9px 0}
-table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:8px;border-bottom:1px solid var(--line);text-align:left}
-@media(max-width:520px){.grid{grid-template-columns:1fr}}
-</style></head>
+/* ---------- Design tokens ---------- */
+:root{
+  --ink:#14151C; --paper:#F6F5F2;
+  --indigo:#2B2D6E; --indigo-light:#4548A8;
+  --amber:#FFC845; --amber-deep:#E8A711;
+  --green:#2E9E6D; --red:#E4572E;
+  --line:#E4E1D9; --text:#1B1C2B; --muted:#6B6E85;
+  --card:#FFFFFF; --bg:var(--paper);
+  --radius:18px; --radius-sm:12px;
+  --font-d:800 1em/1.1 -apple-system,'Segoe UI',Roboto,ui-sans-serif,sans-serif;
+  --font-b:-apple-system,'Segoe UI',Roboto,ui-sans-serif,sans-serif;
+  --font-m:ui-monospace,'SF Mono','Cascadia Code','Roboto Mono',monospace;
+  --shadow:0 2px 14px rgba(20,21,28,.07);
+}
+[data-theme="dark"]{
+  --bg:var(--ink); --card:#1D1F2B; --line:#2A2C3B; --text:#ECEBF5; --muted:#9496AE;
+  --shadow:0 2px 16px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-b);-webkit-tap-highlight-color:transparent;transition:background .2s,color .2s}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{font:var(--font-d);letter-spacing:-.02em;margin:0 0 8px}
+.muted{color:var(--muted);font-size:13px}
+.hidden{display:none!important}
+main{max-width:640px;margin:0 auto;padding:14px 14px 96px}
+
+/* ---------- Header ---------- */
+header{position:sticky;top:0;z-index:10;background:var(--indigo);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow)}
+.logo{width:34px;height:34px;border-radius:10px;background:var(--amber);display:flex;align-items:center;justify-content:center;font:800 18px var(--font-d);color:var(--indigo);flex-shrink:0}
+header .title{flex:1;min-width:0}
+header .title b{display:block;font:800 18px var(--font-d);letter-spacing:-.02em}
+header .title small{opacity:.8;font-size:11px}
+.iconbtn{width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.14);border:0;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.streak{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.14);border-radius:20px;padding:6px 10px;font:700 13px var(--font-m);flex-shrink:0}
+
+/* ---------- Bottom nav ---------- */
+nav#tabbar{position:fixed;bottom:0;left:0;right:0;z-index:10;background:var(--card);border-top:1px solid var(--line);display:flex;padding:6px 4px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -2px 14px rgba(0,0,0,.06);max-width:640px;margin:0 auto}
+nav#tabbar button{flex:1;background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;color:var(--muted);border-radius:12px}
+nav#tabbar button svg{width:21px;height:21px}
+nav#tabbar button span{font-size:10.5px;font-weight:600}
+nav#tabbar button.active{color:var(--indigo)}
+[data-theme="dark"] nav#tabbar button.active{color:var(--amber)}
+
+/* ---------- Cards & controls ---------- */
+.card{background:var(--card);border-radius:var(--radius);padding:16px;margin:12px 0;box-shadow:var(--shadow)}
+.row{display:flex;gap:10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--card);border-radius:var(--radius-sm);padding:12px;text-align:center;box-shadow:var(--shadow)}
+.stat b{display:block;font:800 24px var(--font-d)}
+.stat span{font-size:11px;color:var(--muted)}
+button.btn{border:0;border-radius:var(--radius-sm);padding:13px;background:var(--indigo);color:#fff;width:100%;margin:5px 0;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px}
+button.btn.accent{background:var(--amber);color:var(--indigo)}
+button.btn.secondary{background:var(--line);color:var(--text)}
+button.btn.danger{background:#fde3da;color:#9a2c12}
+[data-theme="dark"] button.btn.danger{background:#3a1f18;color:#ff9a7a}
+button.btn.ghost{background:transparent;border:1.5px solid var(--line);color:var(--text)}
+button.btn.sm{width:auto;padding:8px 12px;font-size:13px}
+input,select,textarea{width:100%;border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:11px;background:var(--bg);color:var(--text);margin:5px 0 10px}
+textarea{min-height:80px;resize:vertical}
+label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.pill{background:var(--indigo);color:#fff;border-radius:20px;padding:6px 11px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:5px}
+[data-theme="dark"] .pill{background:var(--amber);color:var(--indigo)}
+.chip{display:inline-flex;align-items:center;gap:5px;background:var(--bg);border:1.5px solid var(--line);border-radius:20px;padding:6px 12px;font-size:12.5px;font-weight:600;margin:3px 4px 3px 0}
+.chip.on{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+.empty{text-align:center;padding:30px 12px;color:var(--muted)}
+.empty svg{width:44px;height:44px;opacity:.5;margin-bottom:8px}
+
+/* ---------- Bank list item ---------- */
+.qitem{border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:12px;margin:8px 0}
+.qitem .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.qitem .top b{font-size:12.5px;color:var(--indigo)}
+[data-theme="dark"] .qitem .top b{color:var(--amber)}
+.qitem p{margin:6px 0;font-size:14.5px}
+.qitem .acts{display:flex;gap:8px;margin-top:6px}
+.iconlink{background:none;border:0;color:var(--muted);display:flex;align-items:center;gap:4px;font-size:12.5px;font-weight:600}
+.iconlink.star.on{color:var(--amber-deep)}
+.iconlink svg{width:16px;height:16px}
+
+/* ---------- Options / quiz ---------- */
+.option{text-align:left;background:var(--bg);color:var(--text);border:1.5px solid var(--line);position:relative;overflow:hidden}
+.option.good{border-color:var(--green);background:linear-gradient(90deg,rgba(46,158,109,.18),transparent)}
+.option.bad{border-color:var(--red);background:linear-gradient(90deg,rgba(228,87,46,.18),transparent)}
+.topline{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.ring{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:700 12px var(--font-m);background:conic-gradient(var(--amber) calc(var(--pct,100)*1%),var(--line) 0);flex-shrink:0}
+.ring i{width:36px;height:36px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;font-style:normal}
+.score{text-align:center;font:800 52px var(--font-d);color:var(--indigo)}
+[data-theme="dark"] .score{color:var(--amber)}
+.review{border-left:4px solid var(--red);padding:10px 12px;background:var(--bg);margin:9px 0;border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.flash{min-height:170px;border-radius:var(--radius);background:var(--indigo);color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;font-size:18px;font-weight:700;cursor:pointer}
+.flash.back{background:var(--card);color:var(--text);border:1.5px solid var(--line);flex-direction:column;gap:6px}
+.bar{height:8px;border-radius:6px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--amber-deep);border-radius:6px}
+.subjectrow{display:flex;justify-content:space-between;align-items:center;font-size:13.5px;margin:8px 0 4px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td,th{padding:8px 4px;border-bottom:1px solid var(--line);text-align:left}
+.banner{background:var(--amber);color:var(--indigo);border-radius:var(--radius-sm);padding:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 12px;font-weight:700;font-size:13.5px}
+.days{display:flex;gap:5px;align-items:flex-end;height:64px}
+.days .d{flex:1;background:var(--line);border-radius:4px 4px 0 0;position:relative}
+.days .d i{display:block;background:var(--indigo-light);border-radius:4px 4px 0 0;width:100%;position:absolute;bottom:0}
+[data-theme="dark"] .days .d i{background:var(--amber)}
+</style>
+</head>
 <body>
-<header><h1>Test Master</h1><small>Practice Smarter, Score Higher</small></header>
-<nav id="nav">
-<button data-page="home" class="active">Home</button><button data-page="bank">MCQs</button><button data-page="test">Test</button><button data-page="history">Results</button>
-</nav>
+
+<header>
+  <div class="logo">Q</div>
+  <div class="title"><b>Quiznix</b><small>Practice sharp. Score smart.</small></div>
+  <div class="streak" id="streakChip">🔥 0</div>
+  <button class="iconbtn" id="themeBtn" aria-label="Toggle theme">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+  </button>
+</header>
+
 <main>
-<section id="home" class="page">
-<div class="card"><h2>Welcome</h2><p class="muted">Add your MCQs, choose a subject and chapter, then start a test.</p>
-<div class="grid"><div class="stat"><b id="qcount">0</b>MCQs</div><div class="stat"><b id="subjectcount">0</b>Subjects</div></div></div>
-<div class="card"><h3>Quick Start</h3><button onclick="go('bank')">➕ Add MCQs</button><button class="secondary" onclick="go('test')">▶ Start Test</button></div>
+
+<!-- ================= HOME ================= -->
+<section id="page-home" class="page">
+  <div id="resumeBanner" class="banner hidden">
+    <span>▶ You have a session in progress</span>
+    <button class="btn accent sm" onclick="resumeSession()">Resume</button>
+  </div>
+
+  <div class="grid2">
+    <div class="stat"><b id="s-xp">0</b><span>XP earned</span></div>
+    <div class="stat"><b id="s-acc">0%</b><span>Accuracy</span></div>
+    <div class="stat"><b id="s-mcq">0</b><span>MCQs banked</span></div>
+    <div class="stat"><b id="s-weak">0</b><span>Need review</span></div>
+  </div>
+
+  <div class="card">
+    <h3>Quick start</h3>
+    <button class="btn accent" onclick="go('test');presetMode('practice')">▶ Start practice</button>
+    <button class="btn" onclick="go('test');presetMode('test')">⏱ Start timed test</button>
+    <button class="btn secondary" onclick="reviewWeak()">🎯 Review weak questions</button>
+    <button class="btn ghost" onclick="go('bank');toggle('addbox')">➕ Add an MCQ</button>
+  </div>
+
+  <div class="card" id="recentCard">
+    <h3>Recent activity</h3>
+    <div id="recentList" class="muted">No tests taken yet — start a practice round to see it here.</div>
+  </div>
 </section>
 
-<section id="bank" class="page hidden">
-<div class="card"><h2>My MCQs</h2><p class="muted">You can add questions one by one, or import many at once.</p>
-<button onclick="toggle('addbox')">➕ Add One MCQ</button>
-<button class="secondary" onclick="document.getElementById('file').click()">📥 Import MCQs File</button>
-<input id="file" type="file" accept=".csv,.json" class="hidden" onchange="importFile(event)">
-<button class="secondary" onclick="downloadTemplate()">⬇ Download MCQ Template</button>
-<button class="danger" onclick="clearAll()">Delete All MCQs</button></div>
+<!-- ================= BANK ================= -->
+<section id="page-bank" class="page hidden">
+  <div class="card">
+    <h2>Question bank</h2>
+    <p class="muted">Add MCQs one by one, or import many at once.</p>
+    <div class="row">
+      <button class="btn" onclick="toggle('addbox')">➕ Add MCQ</button>
+      <button class="btn secondary" onclick="document.getElementById('file').click()">📥 Import</button>
+    </div>
+    <input id="file" type="file" accept=".csv,.json" class="hidden" onchange="importFile(event)">
+    <div class="row">
+      <button class="btn ghost sm" style="width:100%" onclick="downloadTemplate()">⬇ CSV template</button>
+      <button class="btn ghost sm" style="width:100%" onclick="exportBackup()">⬇ Full backup (JSON)</button>
+    </div>
+  </div>
 
-<div id="addbox" class="card hidden"><h3>Add MCQ</h3>
-<input id="sub" placeholder="Subject (e.g. Biology)">
-<input id="chap" placeholder="Chapter (e.g. Cell)">
-<textarea id="qq" placeholder="Question"></textarea>
-<input id="o1" placeholder="Option A"><input id="o2" placeholder="Option B"><input id="o3" placeholder="Option C"><input id="o4" placeholder="Option D">
-<select id="ans"><option value="0">Correct answer: A</option><option value="1">Correct answer: B</option><option value="2">Correct answer: C</option><option value="3">Correct answer: D</option></select>
-<input id="exp" placeholder="Explanation (optional)">
-<button onclick="addOne()">Save MCQ</button></div>
-<div class="card"><div id="banklist"></div></div>
+  <div id="addbox" class="card hidden">
+    <h3 id="addboxTitle">Add MCQ</h3>
+    <input id="editId" type="hidden">
+    <label>Subject</label><input id="sub" placeholder="e.g. Biology">
+    <label>Chapter</label><input id="chap" placeholder="e.g. Cell Structure">
+    <label>Question</label><textarea id="qq" placeholder="Type the question"></textarea>
+    <label>Options</label>
+    <input id="o1" placeholder="Option A"><input id="o2" placeholder="Option B">
+    <input id="o3" placeholder="Option C"><input id="o4" placeholder="Option D">
+    <label>Correct answer</label>
+    <select id="ans"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select>
+    <label>Explanation (optional)</label><input id="exp" placeholder="Why this answer is correct">
+    <button class="btn accent" onclick="saveOne()">Save MCQ</button>
+  </div>
+
+  <div class="card">
+    <input id="search" placeholder="🔎 Search questions…" oninput="renderBank()">
+    <div id="subjectChips"></div>
+  </div>
+
+  <div class="card"><div id="banklist"></div></div>
 </section>
 
-<section id="test" class="page hidden">
-<div id="setup" class="card"><h2>Start Test</h2>
-<label>Subject</label><select id="tsub"></select>
-<label>Chapter</label><select id="tchap"></select>
-<label>Number of MCQs</label><select id="tn"><option>5</option><option>10</option><option>20</option><option>50</option></select>
-<label>Time</label><select id="tmin"><option value="5">5 minutes</option><option value="10">10 minutes</option><option value="20">20 minutes</option><option value="60">60 minutes</option></select>
-<button onclick="startTest()">Start Test</button></div>
-<div id="quiz" class="card hidden"><div class="topline"><span class="pill" id="qmeta"></span><span class="pill" id="clock"></span></div><h2 id="question"></h2><div id="options"></div><button id="next" class="hidden" onclick="nextQ()">Next Question</button></div>
-<div id="result" class="card hidden"><h2>Result</h2><div id="resultScore" class="score"></div><p id="resultText"></p><button onclick="reviewResult()">Review Wrong Answers</button><button class="secondary" onclick="resetTest()">New Test</button><div id="wrongReview"></div></div>
+<!-- ================= TEST / PRACTICE ================= -->
+<section id="page-test" class="page hidden">
+  <div id="setup" class="card">
+    <h2>Start a session</h2>
+    <label>Mode</label>
+    <div id="modeChips">
+      <span class="chip on" data-mode="practice">🧠 Practice</span>
+      <span class="chip" data-mode="test">⏱ Timed test</span>
+      <span class="chip" data-mode="flash">🗂 Flashcards</span>
+    </div>
+    <label>Subject</label><select id="tsub"></select>
+    <label>Chapter</label><select id="tchap"></select>
+    <label>Number of MCQs</label><select id="tn"><option>5</option><option>10</option><option>20</option><option>50</option></select>
+    <div id="timeRow"><label>Time</label><select id="tmin"><option value="5">5 minutes</option><option value="10">10 minutes</option><option value="20">20 minutes</option><option value="60">60 minutes</option></select></div>
+    <button class="btn accent" onclick="startSession()">Start</button>
+  </div>
+
+  <!-- quiz (practice / test) -->
+  <div id="quiz" class="card hidden">
+    <div class="topline">
+      <span class="pill" id="qmeta"></span>
+      <span class="ring" id="clockRing" style="--pct:100"><i id="clock">0:00</i></span>
+    </div>
+    <h2 id="question"></h2>
+    <div id="options"></div>
+    <div class="row">
+      <button id="prevBtn" class="btn secondary hidden" onclick="prevQ()">← Previous</button>
+      <button id="bookmarkBtn" class="btn ghost sm" onclick="toggleBookmarkCurrent()">☆ Save for review</button>
+    </div>
+    <button id="next" class="btn hidden" onclick="nextQ()">Next question</button>
+  </div>
+
+  <!-- flashcards -->
+  <div id="flashwrap" class="card hidden">
+    <span class="pill" id="fmeta"></span>
+    <div style="height:10px"></div>
+    <div id="flash" class="flash" onclick="flipCard()"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn danger" onclick="flashGrade(false)">Still learning</button>
+      <button class="btn" style="background:var(--green)" onclick="flashGrade(true)">Got it</button>
+    </div>
+  </div>
+
+  <div id="result" class="card hidden">
+    <h2>Result</h2>
+    <div id="resultScore" class="score"></div>
+    <p id="resultText" class="muted" style="text-align:center"></p>
+    <button class="btn accent" onclick="reviewResult()">Review wrong answers</button>
+    <button class="btn secondary" onclick="resetTest()">New session</button>
+    <div id="wrongReview"></div>
+  </div>
 </section>
 
-<section id="history" class="page hidden"><div class="card"><h2>Test History</h2><div id="historyList"></div></div></section>
+<!-- ================= PROGRESS ================= -->
+<section id="page-progress" class="page hidden">
+  <div class="card">
+    <h2>Your progress</h2>
+    <div class="grid2">
+      <div class="stat"><b id="p-level">1</b><span>Level</span></div>
+      <div class="stat"><b id="p-streak">0</b><span>Day streak</span></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Last 7 days</h3>
+    <div class="days" id="daysChart"></div>
+  </div>
+  <div class="card">
+    <h3>By subject</h3>
+    <div id="subjectStats" class="muted">Add MCQs and take a session to see subject breakdowns.</div>
+  </div>
+  <div class="card">
+    <h3>Test history</h3>
+    <div id="historyList"></div>
+  </div>
+</section>
+
 </main>
-<script>
-const KEY='testmaster_questions_v1',HKEY='testmaster_history_v1';
-let bank=JSON.parse(localStorage.getItem(KEY)||'[]'),history=JSON.parse(localStorage.getItem(HKEY)||'[]');
-let quiz=[],qi=0,score=0,wrong=[],seconds=0,timer=null,answered=false;
 
-function save(){localStorage.setItem(KEY,JSON.stringify(bank));render()}
-function render(){document.getElementById('qcount').textContent=bank.length;document.getElementById('subjectcount').textContent=new Set(bank.map(x=>x.subject)).size;renderBank();fillSelectors();renderHistory()}
-function go(p){document.querySelectorAll('.page').forEach(x=>x.classList.add('hidden'));document.getElementById(p).classList.remove('hidden');document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===p));render()}
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.page));
-function toggle(id){document.getElementById(id).classList.toggle('hidden')}
-function addOne(){
-let vals=['sub','chap','qq','o1','o2','o3','o4'].map(id=>document.getElementById(id).value.trim());
-if(vals.some(x=>!x)){alert('Please fill Subject, Chapter, Question and all 4 options.');return}
-bank.push({id:Date.now(),subject:vals[0],chapter:vals[1],q:vals[2],options:vals.slice(3),answer:+document.getElementById('ans').value,explanation:document.getElementById('exp').value.trim()});
-save();['qq','o1','o2','o3','o4','exp'].forEach(id=>document.getElementById(id).value='');alert('MCQ saved.');}
-function renderBank(){let d=document.getElementById('banklist');if(!bank.length){d.innerHTML='<p class="muted">No MCQs yet. Add your first question above.</p>';return}
-d.innerHTML='<p><b>'+bank.length+'</b> MCQs</p>'+bank.slice().reverse().map((x,n)=>'<div class="card"><b>'+x.subject+' → '+x.chapter+'</b><p>'+esc(x.q)+'</p><small>Correct: '+['A','B','C','D'][x.answer]+'</small><button class="danger" onclick="delQ('+x.id+')">Delete</button></div>').join('')}
-function delQ(id){bank=bank.filter(x=>x.id!==id);save()}
+<nav id="tabbar">
+  <button data-page="home" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg><span>Home</span></button>
+  <button data-page="bank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M4 9h16"/></svg><span>Bank</span></button>
+  <button data-page="test"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span>Practice</span></button>
+  <button data-page="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V9M12 19V5M20 19v-7"/></svg><span>Progress</span></button>
+</nav>
+
+<script>
+/* ======================= STATE & PERSISTENCE ======================= */
+const K = {bank:'quiznix_questions_v1', hist:'quiznix_history_v1', set:'quiznix_settings_v1', sess:'quiznix_session_v1'};
+
+// one-time migration from the old "Test Master" storage keys
+(function migrate(){
+  if(!localStorage.getItem(K.bank) && localStorage.getItem('testmaster_questions_v1')){
+    localStorage.setItem(K.bank, localStorage.getItem('testmaster_questions_v1'));
+  }
+  if(!localStorage.getItem(K.hist) && localStorage.getItem('testmaster_history_v1')){
+    localStorage.setItem(K.hist, localStorage.getItem('testmaster_history_v1'));
+  }
+})();
+
+let bank = JSON.parse(localStorage.getItem(K.bank) || '[]');
+let history = JSON.parse(localStorage.getItem(K.hist) || '[]');
+let settings = JSON.parse(localStorage.getItem(K.set) || '{"theme":"light","xp":0,"activity":{}}');
+
+function saveBank(){ localStorage.setItem(K.bank, JSON.stringify(bank)); renderAll(); }
+function saveHistory(){ localStorage.setItem(K.hist, JSON.stringify(history)); }
+function saveSettings(){ localStorage.setItem(K.set, JSON.stringify(settings)); }
+function esc(s){ return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function todayKey(){ return new Date().toISOString().slice(0,10); }
+function bump(field,n){ settings[field]=(settings[field]||0)+n; }
+
+/* ======================= THEME ======================= */
+function applyTheme(){ document.documentElement.setAttribute('data-theme', settings.theme==='dark'?'dark':'light'); }
+document.getElementById('themeBtn').onclick=()=>{ settings.theme = settings.theme==='dark'?'light':'dark'; saveSettings(); applyTheme(); };
+applyTheme();
+
+/* ======================= NAV ======================= */
+function go(p){
+  document.querySelectorAll('.page').forEach(x=>x.classList.add('hidden'));
+  document.getElementById('page-'+p).classList.remove('hidden');
+  document.querySelectorAll('#tabbar button').forEach(x=>x.classList.toggle('active', x.dataset.page===p));
+  renderAll();
+}
+document.querySelectorAll('#tabbar button').forEach(b=>b.onclick=()=>go(b.dataset.page));
+function toggle(id){ document.getElementById(id).classList.toggle('hidden'); }
+
+/* ======================= BANK: ADD / EDIT / DELETE ======================= */
+function saveOne(){
+  const vals=['sub','chap','qq','o1','o2','o3','o4'].map(id=>document.getElementById(id).value.trim());
+  if(vals.some(x=>!x)){ alert('Please fill Subject, Chapter, Question and all 4 options.'); return; }
+  const editId = document.getElementById('editId').value;
+  const data = {subject:vals[0],chapter:vals[1],q:vals[2],options:vals.slice(3),
+    answer:+document.getElementById('ans').value, explanation:document.getElementById('exp').value.trim()};
+  if(editId){
+    const item = bank.find(x=>x.id==editId);
+    Object.assign(item, data);
+  } else {
+    bank.push(Object.assign({id:Date.now(), bookmarked:false, wrongCount:0, attempts:0}, data));
+  }
+  ['sub','chap','qq','o1','o2','o3','o4','exp'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('editId').value='';
+  document.getElementById('addboxTitle').textContent='Add MCQ';
+  document.getElementById('addbox').classList.add('hidden');
+  saveBank();
+}
+function editQ(id){
+  const x = bank.find(q=>q.id===id); if(!x) return;
+  document.getElementById('editId').value = x.id;
+  document.getElementById('sub').value = x.subject;
+  document.getElementById('chap').value = x.chapter;
+  document.getElementById('qq').value = x.q;
+  document.getElementById('o1').value = x.options[0]; document.getElementById('o2').value = x.options[1];
+  document.getElementById('o3').value = x.options[2]; document.getElementById('o4').value = x.options[3];
+  document.getElementById('ans').value = x.answer;
+  document.getElementById('exp').value = x.explanation||'';
+  document.getElementById('addboxTitle').textContent='Edit MCQ';
+  document.getElementById('addbox').classList.remove('hidden');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function delQ(id){ bank=bank.filter(x=>x.id!==id); saveBank(); }
+function toggleBookmark(id){ const x=bank.find(q=>q.id===id); if(x){ x.bookmarked=!x.bookmarked; saveBank(); } }
+function clearAll(){ if(confirm('Delete all MCQs? This cannot be undone.')){ bank=[]; saveBank(); } }
+
+let activeSubjectChip = 'ALL';
+function renderBank(){
+  const d = document.getElementById('banklist');
+  const term = (document.getElementById('search').value||'').toLowerCase();
+  const subs = [...new Set(bank.map(x=>x.subject))];
+  const chipsBox = document.getElementById('subjectChips');
+  chipsBox.innerHTML = '<span class="chip'+(activeSubjectChip==='ALL'?' on':'')+'" onclick="setChip(\'ALL\')">All</span>' +
+    subs.map(s=>'<span class="chip'+(activeSubjectChip===s?' on':'')+'" onclick="setChip(\''+esc(s).replace(/'/g,"\\'")+'\')">'+esc(s)+'</span>').join('');
+
+  let list = bank.filter(x =>
+    (activeSubjectChip==='ALL'||x.subject===activeSubjectChip) &&
+    (!term || (x.q+' '+x.subject+' '+x.chapter).toLowerCase().includes(term))
+  );
+  if(!bank.length){ d.innerHTML='<div class="empty">📭<br>No MCQs yet.<br>Add your first question above.</div>'; return; }
+  if(!list.length){ d.innerHTML='<div class="empty">🔎<br>No matches. Try a different search.</div>'; return; }
+  d.innerHTML = '<p class="muted">'+list.length+' of '+bank.length+' MCQs</p>' + list.slice().reverse().map(x=>
+    '<div class="qitem"><div class="top"><b>'+esc(x.subject)+' → '+esc(x.chapter)+'</b>'+
+    '<button class="iconlink star'+(x.bookmarked?' on':'')+'" onclick="toggleBookmark('+x.id+')">'+(x.bookmarked?'★':'☆')+'</button></div>'+
+    '<p>'+esc(x.q)+'</p><small class="muted">Correct: '+['A','B','C','D'][x.answer]+(x.wrongCount?' • missed '+x.wrongCount+'×':'')+'</small>'+
+    '<div class="acts"><button class="iconlink" onclick="editQ('+x.id+')">✎ Edit</button><button class="iconlink" style="color:var(--red)" onclick="delQ('+x.id+')">🗑 Delete</button></div></div>'
+  ).join('');
+}
+function setChip(s){ activeSubjectChip=s; renderBank(); }
+
+/* ---- CSV / JSON import, template, full backup ---- */
+function importFile(e){
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const text=r.result.trim();
+      const data = f.name.toLowerCase().endsWith('.json') ? JSON.parse(text) : csv(text);
+      const rows = Array.isArray(data) ? data : (data.bank || []);
+      if(!Array.isArray(rows) || !rows.length) throw 0;
+      bank = bank.concat(rows.map((x,i)=>({
+        id:Date.now()+i, bookmarked:false, wrongCount:0, attempts:0,
+        subject:x.subject||'General', chapter:x.chapter||'General',
+        q:x.q||x.question, options:x.options||[x.A,x.B,x.C,x.D],
+        answer:Number(x.answer||0), explanation:x.explanation||''
+      })));
+      saveBank();
+      alert(rows.length+' MCQs imported.');
+    }catch(err){ alert('Could not import this file. Use the CSV template.'); }
+  };
+  r.readAsText(f); e.target.value='';
+}
+function csv(t){
+  const lines=t.split(/\r?\n/).filter(Boolean), head=lines.shift().split(',').map(x=>x.trim());
+  return lines.map(line=>{ const a=line.split(','); const o={}; head.forEach((h,i)=>o[h]=a[i]?.trim()||''); o.options=[o.A,o.B,o.C,o.D]; return o; });
+}
+function downloadTemplate(){
+  const t='subject,chapter,question,A,B,C,D,answer,explanation\nBiology,Cell,Which organelle is the powerhouse of the cell?,Nucleus,Mitochondrion,Ribosome,Vacuole,1,Mitochondria produce most cellular ATP.';
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'})); a.download='Quiznix_Template.csv'; a.click();
+}
+function exportBackup(){
+  const payload = {app:'Quiznix', exportedAt:new Date().toISOString(), bank, history, settings};
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'})); a.download='Quiznix_Backup.json'; a.click();
+}
+
+/* ======================= SELECTORS ======================= */
 function fillSelectors(){
-let subs=[...new Set(bank.map(x=>x.subject))];let ts=document.getElementById('tsub');let old=ts.value;
-ts.innerHTML='<option value="ALL">All Subjects</option>'+subs.map(x=>'<option>'+esc(x)+'</option>').join('');if(subs.includes(old))ts.value=old;fillChapters();
+  const subs=[...new Set(bank.map(x=>x.subject))]; const ts=document.getElementById('tsub'); const old=ts.value;
+  ts.innerHTML='<option value="ALL">All Subjects</option>'+subs.map(x=>'<option>'+esc(x)+'</option>').join('');
+  if(subs.includes(old)) ts.value=old;
+  fillChapters();
 }
 document.getElementById('tsub').onchange=fillChapters;
-function fillChapters(){let s=document.getElementById('tsub').value;let cs=[...new Set(bank.filter(x=>s==='ALL'||x.subject===s).map(x=>x.chapter))];document.getElementById('tchap').innerHTML='<option value="ALL">All Chapters</option>'+cs.map(x=>'<option>'+esc(x)+'</option>').join('')}
-function startTest(){
-if(!bank.length){alert('First add some MCQs.');go('bank');return}
-let s=document.getElementById('tsub').value,c=document.getElementById('tchap').value,n=+document.getElementById('tn').value;
-quiz=bank.filter(x=>(s==='ALL'||x.subject===s)&&(c==='ALL'||x.chapter===c)).sort(()=>Math.random()-.5).slice(0,n);
-if(!quiz.length){alert('No MCQs match this selection.');return}
-qi=0;score=0;wrong=[];seconds=+document.getElementById('tmin').value*60;answered=false;document.getElementById('setup').classList.add('hidden');document.getElementById('result').classList.add('hidden');document.getElementById('quiz').classList.remove('hidden');clearInterval(timer);timer=setInterval(()=>{seconds--;clock();if(seconds<=0)finish()},1000);showQ()}
-function clock(){let m=Math.floor(seconds/60),s=seconds%60;document.getElementById('clock').textContent=m+':'+String(s).padStart(2,'0')}
-function showQ(){answered=false;let x=quiz[qi];document.getElementById('qmeta').textContent=(qi+1)+' / '+quiz.length+' • '+x.subject;document.getElementById('question').textContent=x.q;let o=document.getElementById('options');o.innerHTML='';x.options.forEach((t,k)=>{let b=document.createElement('button');b.className='option';b.textContent=['A. ','B. ','C. ','D. '][k]+t;b.onclick=()=>answer(k,b);o.appendChild(b)});document.getElementById('next').classList.add('hidden');clock()}
-function answer(k,b){if(answered)return;answered=true;let x=quiz[qi];document.querySelectorAll('.option').forEach((e,j)=>{if(j===x.answer)e.classList.add('good')});if(k===x.answer)score++;else{b.classList.add('bad');wrong.push({x,chosen:k})}document.getElementById('next').classList.remove('hidden')}
-function nextQ(){if(qi+1<quiz.length){qi++;showQ()}else finish()}
-function finish(){clearInterval(timer);document.getElementById('quiz').classList.add('hidden');document.getElementById('result').classList.remove('hidden');let p=Math.round(score/quiz.length*100);document.getElementById('resultScore').textContent=p+'%';document.getElementById('resultText').textContent='Correct: '+score+' / '+quiz.length+' • Wrong: '+(quiz.length-score);history.unshift({date:new Date().toLocaleString(),score,p,total:quiz.length,subject:quiz[0]?.subject||'All'});history=history.slice(0,50);localStorage.setItem(HKEY,JSON.stringify(history));document.getElementById('wrongReview').innerHTML=''}
-function reviewResult(){let r=document.getElementById('wrongReview');r.innerHTML='<h3>Wrong Answers</h3>';if(!wrong.length){r.innerHTML+='<p>Excellent — all answers were correct.</p>';return}wrong.forEach(w=>{r.innerHTML+='<div class="review"><b>'+esc(w.x.q)+'</b><br>Your answer: '+esc(w.x.options[w.chosen])+'<br>Correct: '+esc(w.x.options[w.x.answer])+(w.x.explanation?'<br><span class="muted">'+esc(w.x.explanation)+'</span>':'')+'</div>'})}
-function resetTest(){document.getElementById('result').classList.add('hidden');document.getElementById('setup').classList.remove('hidden')}
-function renderHistory(){let d=document.getElementById('historyList');if(!history.length){d.innerHTML='<p class="muted">No tests taken yet.</p>';return}d.innerHTML='<table><tr><th>Date</th><th>Subject</th><th>Score</th></tr>'+history.map(x=>'<tr><td>'+esc(x.date)+'</td><td>'+esc(x.subject)+'</td><td>'+x.score+'/'+x.total+' ('+x.p+'%)</td></tr>').join('')+'</table>'}
-function clearAll(){if(confirm('Delete all MCQs?')){bank=[];save()}}
-function importFile(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let text=r.result.trim(),data=f.name.toLowerCase().endsWith('.json')?JSON.parse(text):csv(text);if(!Array.isArray(data)||!data.length)throw 0;bank=bank.concat(data.map((x,i)=>({id:Date.now()+i,subject:x.subject||'General',chapter:x.chapter||'General',q:x.q||x.question,options:x.options||[x.A,x.B,x.C,x.D],answer:Number(x.answer||0),explanation:x.explanation||''})));save();alert(data.length+' MCQs imported.')}catch(err){alert('Could not import this file. Use the template.')}};r.readAsText(f);e.target.value=''}
-function csv(t){let lines=t.split(/\r?\n/).filter(Boolean),head=lines.shift().split(',').map(x=>x.trim());return lines.map(line=>{let a=line.split(',');let o={};head.forEach((h,i)=>o[h]=a[i]?.trim()||'');o.options=[o.A,o.B,o.C,o.D];return o})}
-function downloadTemplate(){let t='subject,chapter,question,A,B,C,D,answer,explanation\\nBiology,Cell,Which organelle is the powerhouse of the cell?,Nucleus,Mitochondrion,Ribosome,Vacuole,1,Mitochondria produce most cellular ATP.';let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download='MCQ_Template.csv';a.click()}
-function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-render();
-</script></body></html>
+function fillChapters(){
+  const s=document.getElementById('tsub').value;
+  const cs=[...new Set(bank.filter(x=>s==='ALL'||x.subject===s).map(x=>x.chapter))];
+  document.getElementById('tchap').innerHTML='<option value="ALL">All Chapters</option>'+cs.map(x=>'<option>'+esc(x)+'</option>').join('');
+}
+
+/* ======================= MODE CHIPS ======================= */
+let sessionMode='practice';
+document.querySelectorAll('#modeChips .chip').forEach(c=>c.onclick=()=>{
+  document.querySelectorAll('#modeChips .chip').forEach(x=>x.classList.remove('on'));
+  c.classList.add('on'); sessionMode=c.dataset.mode;
+  document.getElementById('timeRow').style.display = sessionMode==='test'?'block':'none';
+});
+function presetMode(m){
+  document.querySelectorAll('#modeChips .chip').forEach(x=>x.classList.toggle('on', x.dataset.mode===m));
+  sessionMode=m; document.getElementById('timeRow').style.display = m==='test'?'block':'none';
+}
+
+/* ======================= QUIZ ENGINE (practice + test) ======================= */
+let quiz=[], qi=0, score=0, wrong=[], seconds=0, totalSeconds=0, timer=null, answered=false;
+
+function startSession(){
+  if(!bank.length){ alert('First add some MCQs.'); go('bank'); return; }
+  const s=document.getElementById('tsub').value, c=document.getElementById('tchap').value, n=+document.getElementById('tn').value;
+  const pool = bank.filter(x=>(s==='ALL'||x.subject===s)&&(c==='ALL'||x.chapter===c));
+  quiz = pool.slice().sort(()=>Math.random()-.5).slice(0,n);
+  if(!quiz.length){ alert('No MCQs match this selection.'); return; }
+  document.getElementById('setup').classList.add('hidden');
+  document.getElementById('result').classList.add('hidden');
+  if(sessionMode==='flash'){ startFlash(); return; }
+  qi=0; score=0; wrong=[]; answered=false;
+  totalSeconds = seconds = sessionMode==='test' ? (+document.getElementById('tmin').value*60) : 0;
+  document.getElementById('quiz').classList.remove('hidden');
+  clearInterval(timer);
+  if(sessionMode==='test'){
+    timer=setInterval(()=>{ seconds--; clock(); if(seconds<=0) finish(); },1000);
+  }
+  document.getElementById('clockRing').style.display = sessionMode==='test' ? 'flex':'none';
+  saveSessionState();
+  showQ();
+}
+function clock(){
+  const m=Math.floor(seconds/60), s=seconds%60;
+  document.getElementById('clock').textContent=m+':'+String(s).padStart(2,'0');
+  const pct = totalSeconds ? Math.max(0, Math.round(seconds/totalSeconds*100)) : 100;
+  document.getElementById('clockRing').style.setProperty('--pct', pct);
+}
+function showQ(){
+  answered=false;
+  const x=quiz[qi];
+  document.getElementById('qmeta').textContent=(qi+1)+' / '+quiz.length+' • '+x.subject;
+  document.getElementById('question').textContent=x.q;
+  document.getElementById('bookmarkBtn').textContent = x.bookmarked ? '★ Saved' : '☆ Save for review';
+  const o=document.getElementById('options'); o.innerHTML='';
+  x.options.forEach((t,k)=>{
+    const b=document.createElement('button'); b.className='btn option';
+    b.textContent=['A. ','B. ','C. ','D. '][k]+t; b.onclick=()=>answer(k,b); o.appendChild(b);
+  });
+  document.getElementById('next').classList.add('hidden');
+  document.getElementById('prevBtn').classList.toggle('hidden', sessionMode!=='practice' || qi===0);
+  if(sessionMode==='test') clock();
+  saveSessionState();
+}
+function answer(k,b){
+  if(answered) return; answered=true;
+  const x=quiz[qi]; x.attempts=(x.attempts||0)+1;
+  document.querySelectorAll('.option').forEach((e,j)=>{ if(j===x.answer) e.classList.add('good'); });
+  if(k===x.answer){ score++; }
+  else { b.classList.add('bad'); wrong.push({x,chosen:k}); x.wrongCount=(x.wrongCount||0)+1; }
+  saveBank();
+  document.getElementById('next').classList.remove('hidden');
+}
+function nextQ(){ if(qi+1<quiz.length){ qi++; showQ(); } else finish(); }
+function prevQ(){ if(qi>0){ qi--; showQ(); } }
+function toggleBookmarkCurrent(){ const x=quiz[qi]; x.bookmarked=!x.bookmarked; saveBank(); showQ(); }
+
+function finish(){
+  clearInterval(timer);
+  document.getElementById('quiz').classList.add('hidden');
+  document.getElementById('result').classList.remove('hidden');
+  const p=Math.round(score/quiz.length*100);
+  document.getElementById('resultScore').textContent=p+'%';
+  document.getElementById('resultText').textContent='Correct: '+score+' / '+quiz.length+' • Wrong: '+(quiz.length-score);
+  history.unshift({date:new Date().toISOString(), score, p, total:quiz.length, subject:quiz[0]?.subject||'All', mode:sessionMode});
+  history = history.slice(0,200);
+  saveHistory();
+  bump('xp', score*10);
+  const day = todayKey(); settings.activity[day] = (settings.activity[day]||0)+1;
+  saveSettings();
+  clearSessionState();
+  renderAll();
+}
+function reviewResult(){
+  const r=document.getElementById('wrongReview'); r.innerHTML='<h3>Wrong answers</h3>';
+  if(!wrong.length){ r.innerHTML+='<p class="muted">Excellent — all answers were correct.</p>'; return; }
+  wrong.forEach(w=>{
+    r.innerHTML+='<div class="review"><b>'+esc(w.x.q)+'</b><br>Your answer: '+esc(w.x.options[w.chosen])+
+      '<br>Correct: '+esc(w.x.options[w.x.answer])+(w.x.explanation?'<br><span class="muted">'+esc(w.x.explanation)+'</span>':'')+'</div>';
+  });
+}
+function resetTest(){
+  document.getElementById('result').classList.add('hidden');
+  document.getElementById('setup').classList.remove('hidden');
+  fillSelectors();
+}
+function reviewWeak(){
+  const weak = bank.filter(x=>(x.wrongCount||0)>0).sort((a,b)=>(b.wrongCount||0)-(a.wrongCount||0)).slice(0,20);
+  if(!weak.length){ alert('No weak questions yet — nice! Take a test to build this list.'); return; }
+  quiz=weak; qi=0; score=0; wrong=[]; answered=false; sessionMode='practice'; totalSeconds=seconds=0;
+  go('test');
+  document.getElementById('setup').classList.add('hidden');
+  document.getElementById('quiz').classList.remove('hidden');
+  document.getElementById('clockRing').style.display='none';
+  showQ();
+}
+
+/* ---- flashcards ---- */
+let flipped=false;
+function startFlash(){ qi=0; document.getElementById('flashwrap').classList.remove('hidden'); showFlash(); }
+function showFlash(){
+  flipped=false;
+  const x=quiz[qi];
+  document.getElementById('fmeta').textContent=(qi+1)+' / '+quiz.length+' • '+x.subject;
+  const el=document.getElementById('flash'); el.className='flash';
+  el.textContent = x.q;
+}
+function flipCard(){
+  const x=quiz[qi]; const el=document.getElementById('flash'); flipped=!flipped;
+  if(flipped){ el.className='flash back'; el.innerHTML='<b>'+esc(x.options[x.answer])+'</b>'+(x.explanation?'<span class="muted">'+esc(x.explanation)+'</span>':''); }
+  else { el.className='flash'; el.textContent=x.q; }
+}
+function flashGrade(gotIt){
+  const x=quiz[qi]; x.attempts=(x.attempts||0)+1;
+  if(!gotIt) x.wrongCount=(x.wrongCount||0)+1;
+  saveBank();
+  if(qi+1<quiz.length){ qi++; showFlash(); }
+  else { document.getElementById('flashwrap').classList.add('hidden'); finish(); }
+}
+
+/* ---- session persistence (survives app switching / Android backgrounding) ---- */
+function saveSessionState(){
+  if(sessionMode==='flash') return;
+  localStorage.setItem(K.sess, JSON.stringify({quiz,qi,score,wrong,seconds,totalSeconds,sessionMode,answered,at:Date.now()}));
+}
+function clearSessionState(){ localStorage.removeItem(K.sess); }
+function checkResumable(){
+  const raw = localStorage.getItem(K.sess);
+  document.getElementById('resumeBanner').classList.toggle('hidden', !raw);
+}
+function resumeSession(){
+  const raw = localStorage.getItem(K.sess); if(!raw) return;
+  const s = JSON.parse(raw);
+  quiz=s.quiz; qi=s.qi; score=s.score; wrong=s.wrong; seconds=s.seconds; totalSeconds=s.totalSeconds; sessionMode=s.sessionMode;
+  go('test');
+  document.getElementById('setup').classList.add('hidden');
+  document.getElementById('quiz').classList.remove('hidden');
+  document.getElementById('clockRing').style.display = sessionMode==='test' ? 'flex':'none';
+  clearInterval(timer);
+  if(sessionMode==='test'){ timer=setInterval(()=>{ seconds--; clock(); if(seconds<=0) finish(); },1000); }
+  showQ();
+}
+
+/* ======================= PROGRESS / STATS ======================= */
+function renderProgress(){
+  const totalAttempts = history.reduce((a,h)=>a+h.total,0);
+  const totalCorrect = history.reduce((a,h)=>a+h.score,0);
+  const acc = totalAttempts ? Math.round(totalCorrect/totalAttempts*100) : 0;
+  const weakCount = bank.filter(x=>(x.wrongCount||0)>0).length;
+
+  document.getElementById('s-xp').textContent = settings.xp||0;
+  document.getElementById('s-acc').textContent = acc+'%';
+  document.getElementById('s-mcq').textContent = bank.length;
+  document.getElementById('s-weak').textContent = weakCount;
+  document.getElementById('p-level').textContent = 1+Math.floor((settings.xp||0)/200);
+  document.getElementById('p-streak').textContent = computeStreak();
+  document.getElementById('streakChip').textContent = '🔥 '+computeStreak();
+
+  // recent activity (home)
+  const rl = document.getElementById('recentList');
+  rl.innerHTML = history.length ? history.slice(0,4).map(h=>
+    '<div class="subjectrow"><span>'+esc(h.subject)+' — '+new Date(h.date).toLocaleDateString()+'</span><b>'+h.score+'/'+h.total+'</b></div>'
+  ).join('') : 'No tests taken yet — start a practice round to see it here.';
+
+  // 7-day chart
+  const days=[]; for(let i=6;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); days.push(d.toISOString().slice(0,10)); }
+  const max = Math.max(1, ...days.map(d=>settings.activity[d]||0));
+  document.getElementById('daysChart').innerHTML = days.map(d=>{
+    const v = settings.activity[d]||0; const h = Math.max(4, Math.round(v/max*56));
+    return '<div class="d" title="'+d+': '+v+'"><i style="height:'+h+'px"></i></div>';
+  }).join('');
+
+  // subject breakdown
+  const subs=[...new Set(bank.map(x=>x.subject))];
+  const box=document.getElementById('subjectStats');
+  if(!subs.length){ box.innerHTML='<span class="muted">Add MCQs and take a session to see subject breakdowns.</span>'; }
+  else {
+    box.innerHTML = subs.map(s=>{
+      const qs = bank.filter(x=>x.subject===s);
+      const attempts = qs.reduce((a,x)=>a+(x.attempts||0),0);
+      const misses = qs.reduce((a,x)=>a+(x.wrongCount||0),0);
+      const pct = attempts ? Math.round((attempts-misses)/attempts*100) : 0;
+      return '<div class="subjectrow"><span>'+esc(s)+'</span><b>'+pct+'%</b></div><div class="bar"><i style="width:'+pct+'%"></i></div>';
+    }).join('');
+  }
+
+  // history table
+  const hd=document.getElementById('historyList');
+  hd.innerHTML = history.length ? '<table><tr><th>Date</th><th>Subject</th><th>Score</th></tr>'+
+    history.slice(0,50).map(x=>'<tr><td>'+new Date(x.date).toLocaleDateString()+'</td><td>'+esc(x.subject)+'</td><td>'+x.score+'/'+x.total+' ('+x.p+'%)</td></tr>').join('')+'</table>'
+    : '<span class="muted">No tests taken yet.</span>';
+}
+function computeStreak(){
+  let n=0; const d=new Date();
+  while(true){ const key=d.toISOString().slice(0,10); if(settings.activity[key]){ n++; d.setDate(d.getDate()-1); } else break; }
+  return n;
+}
+
+/* ======================= RENDER ALL ======================= */
+function renderAll(){
+  renderBank(); fillSelectors(); renderProgress(); checkResumable();
+}
+renderAll();
+</script>
+</body>
+</html>
